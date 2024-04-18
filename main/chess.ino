@@ -158,14 +158,9 @@ bool Board::doMove() {
   // If move in not valid, keep lights lit unless piece is moved back.
   while (!stop) {
 
-    // TODO: loop through board return square number
-    // Use square number to determine turn and x,y coordinates.
-    // Map from square number to x,y
-    // Read through array, return true if sensor is tripped. false otherwise.
-
     // Continuously loop through the board  to check for changes in sensor states.
     while(squareNum < 0){
-      squareNum = checkBoard();
+      squareNum = checkPieceLifted();
     }
 
     // Get x,y coordinates for a given square
@@ -175,14 +170,17 @@ bool Board::doMove() {
     if (getSquare(x1, y1)->getColor() == turn) {
         
         switch(getSquare(x1, y1)->getPiece()){
-          case KING: kingMoves(y1, x1); break;
-          case QUEEN: queenMoves(y1, x1); break;
+          case KING:   kingMoves(y1, x1); break;
+          case QUEEN:  queenMoves(y1, x1); break;
           case BISHOP: bishopMoves(y1, x1); break;
           case KNIGHT: knightMoves(y1, x1); break;
-          case ROOK: rookMoves(y1, x1); break;
-          case PAWN: pawnMoves(y1, x1); break;
+          case ROOK:   rookMoves(y1, x1); break;
+          case PAWN:   pawnMoves(y1, x1); break;
           default: Serial.println("Something went wrong in the switch statement in makeMove()"); break;
         }
+
+        // TODO: check board for where piece was placed
+
       if (makeMove(x1, y1, x2, y2) == false) {
         continue;
       } else {
@@ -536,19 +534,19 @@ bool Board::movePawn(Square* thisPawn, Square* thatSpace) {
 bool Board::makeMove(int x1, int y1, int x2, int y2) {
   
   // Make move logic
-  Square* src = getSquare(x1, y1);
+  Square* src =  getSquare(x1, y1);
   Square* dest = getSquare(x2, y2);
 
   switch (src->getPiece())
   {
-    case KING: return moveKing(src, dest); break;
-    case QUEEN: return moveQueen(src, dest); break;
+    case KING:   return moveKing(src, dest); break;
+    case QUEEN:  return moveQueen(src, dest); break;
     case BISHOP: return moveBishop(src, dest); break;
     case KNIGHT: return moveKnight(src, dest); break;
-    case ROOK: return moveRook(src, dest); break;
-    case PAWN: return movePawn(src, dest); break;
-    case EMPTY: Serial.println("You do not have a piece there"); return false; break;
-    default: Serial.println("Something went wrong in the switch statement in makeMove()"); break;
+    case ROOK:   return moveRook(src, dest); break;
+    case PAWN:   return movePawn(src, dest); break;
+    case EMPTY:  Serial.println("You do not have a piece there"); return false; break;
+    default:     Serial.println("Something went wrong in the switch statement in makeMove()"); break;
   }
   return false;
 }
@@ -556,7 +554,7 @@ bool Board::makeMove(int x1, int y1, int x2, int y2) {
 void Board::kingMoves(int y_coord, int x_coord){
   uint32_t color = strip.Color(255,255,255); // define color to be used (white)
 
-  strip.setPixelColor(LED_BOARD[y_coord][x_coord], color);
+  strip.setPixelColor(LED_BOARD[y_coord][x_coord],   color);
   strip.setPixelColor(LED_BOARD[y_coord][x_coord+1], color);
   strip.setPixelColor(LED_BOARD[y_coord][x_coord-1], color);
   strip.setPixelColor(LED_BOARD[y_coord+1][x_coord], color);
@@ -614,7 +612,7 @@ void Board::bishopMoves(int y_coord, int x_coord){
 void Board::knightMoves(int y_coord, int x_coord){
   uint32_t color = strip.Color(255,255,255); // define color to be used (white)
 
-  strip.setPixelColor(LED_BOARD[y_coord][x_coord], color);
+  strip.setPixelColor(LED_BOARD[y_coord][x_coord],     color);
   strip.setPixelColor(LED_BOARD[y_coord+2][x_coord+1], color);
   strip.setPixelColor(LED_BOARD[y_coord+1][x_coord+2], color);
   strip.setPixelColor(LED_BOARD[y_coord-1][x_coord+2], color);
@@ -659,7 +657,7 @@ void Board::pawnMoves(int y_coord, int x_coord){
 };
 
 // Add logic to only check squares with pieces
-int Board::checkBoard(){
+int Board::checkPieceLifted(){
 
   // Read digital inputs for Chip 1 (MCP23017)
   for (int i = 0; i <= 15; i++) {
@@ -702,5 +700,50 @@ int Board::checkBoard(){
   }
   return -1;
 }
+
+int Board::checkPiecePlaced(){
+
+  // Read digital inputs for Chip 1 (MCP23017)
+  for (int i = 0; i <= 15; i++) {
+      int hallState = mcp1.digitalRead(i);
+      if (hallState == HIGH) {
+        if(getSquareByNum(i)->getPiece() != NONE){
+          return i;
+        }
+      }
+  }
+
+  // Read digital inputs for Chip 2 (MCP23017)
+  for (int i = 16; i <= 31; i++) {
+      int hallState = mcp2.digitalRead(i);
+      if (hallState == LOW) {
+        if(getSquareByNum(i)->getPiece() != NONE){
+          return i;
+        }
+      }
+  }
+
+  // Read digital inputs for Chip 3 (MCP23017)
+  for (int i = 32; i <= 47; i++) {
+      int hallState = mcp3.digitalRead(i);
+      if (hallState == LOW) {
+        if(getSquareByNum(i)->getPiece() != NONE){
+          return i;
+        }
+      }
+  }
+
+  // Read digital inputs for Chip 4 (MCP23017)
+  for (int i = 48; i <= 63; i++) {
+      int hallState = mcp4.digitalRead(i);
+      if (hallState == LOW) {
+        if(getSquareByNum(i)->getPiece() != NONE){
+          return i;
+        }
+      }
+  }
+  return -1;
+}
+
 
 

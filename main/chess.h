@@ -72,7 +72,8 @@ public:
     bool doMove();
     void setBoard();
     bool playGame();
-    int checkBoard();
+    int checkPieceLifted();
+    int checkPiecePlaaced();
 
     void kingMoves(int x, int y);
     void queenMoves(int x, int y);
