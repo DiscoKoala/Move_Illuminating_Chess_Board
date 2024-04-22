@@ -72,15 +72,16 @@ public:
     bool doMove();
     void setBoard();
     bool playGame();
+    
     int checkPieceLifted();
-    int checkPiecePlaaced();
+    int checkPiecePlaced();
 
     void kingMoves(int x, int y);
     void queenMoves(int x, int y);
     void bishopMoves(int x, int y);
     void knightMoves(int x, int y);
     void rookMoves(int x, int y);
-    void pawnMoves(int x, int y, int enemy);
+    void pawnMoves(int x, int y);
 };
 
 #endif

@@ -163,23 +163,30 @@ bool Board::doMove() {
       squareNum = checkPieceLifted();
     }
 
-    // Get x,y coordinates for a given square
+    // Get x,y coordinates for source square
     x1 = getSquareByNum(squareNum)->getX();
     y1 = getSquareByNum(squareNum)->getY();
+    squareNum = -1;
 
     if (getSquare(x1, y1)->getColor() == turn) {
         
-        switch(getSquare(x1, y1)->getPiece()){
-          case KING:   kingMoves(y1, x1); break;
-          case QUEEN:  queenMoves(y1, x1); break;
-          case BISHOP: bishopMoves(y1, x1); break;
-          case KNIGHT: knightMoves(y1, x1); break;
-          case ROOK:   rookMoves(y1, x1); break;
-          case PAWN:   pawnMoves(y1, x1); break;
-          default: Serial.println("Something went wrong in the switch statement in makeMove()"); break;
-        }
+      switch(getSquare(x1, y1)->getPiece()){
+        case KING:   kingMoves(y1, x1); break;
+        case QUEEN:  queenMoves(y1, x1); break;
+        case BISHOP: bishopMoves(y1, x1); break;
+        case KNIGHT: knightMoves(y1, x1); break;
+        case ROOK:   rookMoves(y1, x1); break;
+        case PAWN:   pawnMoves(y1, x1); break;
+        default: Serial.println("Something went wrong in the switch statement in makeMove()"); break;
+      }
 
-        // TODO: check board for where piece was placed
+      while(squareNum < 0){
+        squareNum = checkPiecePlaced();
+      }
+
+      // Get x,y coordinates for destination square
+      x2 = getSquareByNum(squareNum)->getX();
+      y2 = getSquareByNum(squareNum)->getY();
 
       if (makeMove(x1, y1, x2, y2) == false) {
         continue;
@@ -187,9 +194,13 @@ bool Board::doMove() {
         stop = true;
       }
     } 
-    // else {
-    //   // Handle not the player's turn
-    // }
+    else {
+      Serial.print("Doesn't seem to be your turn. ");
+      Serial.print(turn);
+      Serial.print("'s turn.");
+
+      continue;
+    }
   }
   if (getSquare(x2, y2)->getPiece() == KING) {
     if (getSquare(x1, y1)->getColor() == WHITE) {
@@ -265,9 +276,6 @@ bool Board::playGame() {
 }
 
 bool Board::moveKing(Square* thisKing, Square* thatSpace) {
-
-  // off board inputs should be handled elsewhere (before this)
-  // squares with the same color should be handled elsewhere (before this)
 
   // If piece is put back turn off lights, return false, and continue turn
   if(thatSpace->getX() == thisKing->getX() && thatSpace->getY() == thisKing->getY()){
@@ -656,7 +664,6 @@ void Board::pawnMoves(int y_coord, int x_coord){
   strip.show();
 };
 
-// Add logic to only check squares with pieces
 int Board::checkPieceLifted(){
 
   // Read digital inputs for Chip 1 (MCP23017)
@@ -673,7 +680,7 @@ int Board::checkPieceLifted(){
   for (int i = 16; i <= 31; i++) {
       int hallState = mcp2.digitalRead(i);
       if (hallState == LOW) {
-        if(getSquareByNum(i)->getPiece() != NONE){
+        if(getSquareByNum(i)->getPiece() != EMPTY){
           return i;
         }
       }
@@ -683,7 +690,7 @@ int Board::checkPieceLifted(){
   for (int i = 32; i <= 47; i++) {
       int hallState = mcp3.digitalRead(i);
       if (hallState == LOW) {
-        if(getSquareByNum(i)->getPiece() != NONE){
+        if(getSquareByNum(i)->getPiece() != EMPTY){
           return i;
         }
       }
@@ -693,7 +700,7 @@ int Board::checkPieceLifted(){
   for (int i = 48; i <= 63; i++) {
       int hallState = mcp4.digitalRead(i);
       if (hallState == LOW) {
-        if(getSquareByNum(i)->getPiece() != NONE){
+        if(getSquareByNum(i)->getPiece() != EMPTY){
           return i;
         }
       }
@@ -707,7 +714,7 @@ int Board::checkPiecePlaced(){
   for (int i = 0; i <= 15; i++) {
       int hallState = mcp1.digitalRead(i);
       if (hallState == HIGH) {
-        if(getSquareByNum(i)->getPiece() != NONE){
+        if(getSquareByNum(i)->getPiece() == NONE){
           return i;
         }
       }
@@ -716,8 +723,8 @@ int Board::checkPiecePlaced(){
   // Read digital inputs for Chip 2 (MCP23017)
   for (int i = 16; i <= 31; i++) {
       int hallState = mcp2.digitalRead(i);
-      if (hallState == LOW) {
-        if(getSquareByNum(i)->getPiece() != NONE){
+      if (hallState == HIGH) {
+        if(getSquareByNum(i)->getPiece() == EMPTY){
           return i;
         }
       }
@@ -726,8 +733,8 @@ int Board::checkPiecePlaced(){
   // Read digital inputs for Chip 3 (MCP23017)
   for (int i = 32; i <= 47; i++) {
       int hallState = mcp3.digitalRead(i);
-      if (hallState == LOW) {
-        if(getSquareByNum(i)->getPiece() != NONE){
+      if (hallState == HIGH) {
+        if(getSquareByNum(i)->getPiece() == EMPTY){
           return i;
         }
       }
@@ -736,8 +743,8 @@ int Board::checkPiecePlaced(){
   // Read digital inputs for Chip 4 (MCP23017)
   for (int i = 48; i <= 63; i++) {
       int hallState = mcp4.digitalRead(i);
-      if (hallState == LOW) {
-        if(getSquareByNum(i)->getPiece() != NONE){
+      if (hallState == HIGH) {
+        if(getSquareByNum(i)->getPiece() == EMPTY){
           return i;
         }
       }
